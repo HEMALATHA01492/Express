@@ -1,5 +1,4 @@
-//after install of EXPRESS
-
+require('dotenv').config();
 const express = require('express');
 const app = express();
 const cors =require('cors');
@@ -10,7 +9,8 @@ app.use(cors());
 app.use(express.json());
 
 
-const url=`mongodb+srv://hema01492:9003848078@cluster0.kgdagnl.mongodb.net/NotesDB?retryWrites=true&w=majority`;
+// const url=`mongodb+srv://hema01492:9003848078@cluster0.kgdagnl.mongodb.net/NotesDB?retryWrites=true&w=majority`;
+const url=process.env.ATLAS_URI;
 
 mongoose.connect(url)
 .then( ()=> console.log('Connected to mongodb'))
@@ -27,16 +27,7 @@ const noteSchema= new mongoose.Schema({
 //create a note
 const Note= mongoose.model('Note',noteSchema,'notes');//(DBNAME,SCHEMA,COLLECTION NAME)
 
-
-
-   
-// //1.set the endpoints(different end points )
-// app.get('/',(request,response)=>{
-//     //2. response.send('<h1>Hello World<h1>')
-//     response.send('<h1>Notes App<h1>')
-//     //1. response.send('Hello world')
-// });
- 
+  
 //2.to get all the notes
 app.get('/api/notes',(request,response)=>{
     Note.find({},{})
@@ -45,65 +36,76 @@ app.get('/api/notes',(request,response)=>{
     })
 });
 
-// //creates a new resource based on the request data
+ //creates a new resource based on the request data
 app.post('/api/notes',(request,response)=>{
-    //1.  console.log(request.body);
-    //1. response.status(201).json({message:'post request made successfully'})
+    //prepare an object to store it in the collection
+    const note=new Note(request.body);
+    note.save()
+    .then(() =>{
+        response.status(201).json({message:'note made successfully'})
 
-    notes = notes.concat(request.body);
-    response.status(201).json({message:'note made successfully'})
+    })
 });
 
 //fetches a single resources based on id
 app.get('/api/notes/:id',(request,response)=>{
     const id=request.params.id;
-    const note=notes.find(note => note.id == id);
+
+    Note.findById(id)
+    .then(note=>{
     if(note){
-             response.status(200).json(note);
+         response.status(200).json(note);
     }else{
         response.status(400).json({message:'id does not exists'});
     }
-    })
+    });
+});
 
-    //delete a single resources based on id
+//     //delete a single resources based on id
     app.delete('/api/notes/:id',(request,response)=>{
         //get id
         const id=request.params.id;
-    const note=notes.find(note => note.id == id);
-    notes=notes.filter(note => note.id != id);
-    if(note){
-             response.status(204).json(note);
+    Note.findByIdAndDelete(id)
+    .then((deletedNote) =>{  
+    if(deletedNote){
+             response.status(204).json({message:'note deleted successfully'});
     }else{
         response.status(400).json({message:'id does not exists'});
     }
-    })
+    });
+});
 
-    // replaces the entire note object identified by an id
+//     // replaces the entire note object identified by an id
     app.put('/api/notes/:id',(request,response)=>{
         //get id
         const id=request.params.id;
         const noteToReplace = request.body;
-        const note=notes.find(note => note.id == id);
-        notes=notes.map(note => note.id == id ? noteToReplace:note)
-    if(note){
-             response.status(200).json({message:'note repalced'});
-    }else{
-        response.status(400).json({message:'id does not exists'});
-    }
-})
 
-//PATCH
+        Note.findByIdAndUpdate(id,noteToReplace)
+        .then((updatedNote) =>{  
+
+    if(updatedNote){
+             response.status(200).json({message:'note updated successfully'});
+    }else{
+        response.status(404).json({message:'id does not exists'});
+    }
+        });
+});
+
+// //PATCH
 app.patch('/api/notes/:id',(request,response)=>{
     //get id
     const id=request.params.id;
-    const noteToReplace = request.body;
-    const note=notes.find(note => note.id == id);
-    notes=notes.map(note => note.id == id ? {...note,...noteToReplace}:note)
-if(note){
+    const noteToPatch = request.body;
+    Note.findByIdAndUpdate(id,noteToPatch)
+    .then((updatedNote) =>{  
+
+if(updatedNote){
          response.status(200).json({message:'note repatched'});
 }else{
     response.status(400).json({message:'id does not exists'});
 }
+});
 });
 
 const PORT=3001;
