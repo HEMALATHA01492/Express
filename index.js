@@ -2,6 +2,8 @@
 
 const express = require('express');
 const app = express();
+//middleware
+app.use(express.json)
 let notes=[
         {
             id:1,
@@ -33,6 +35,12 @@ app.get('/',(request,response)=>{
 //2.to get all the notes
 app.get('/api/notes',(request,response)=>{
     response.json(notes);
+});
+
+//creates a new resource based on the request data
+app.post('/api/notes',(request,response)=>{
+    console.log(request.body);
+    response.status(201).json({message:'post request made successfully'})
 });
 
 
