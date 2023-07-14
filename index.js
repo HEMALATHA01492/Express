@@ -3,27 +3,32 @@
 const express = require('express');
 const app = express();
 const cors =require('cors');
+const mongoose=require('mongoose');
+
 // //middleware
 app.use(cors());
 app.use(express.json());
 
-let notes=[
-        {
-            id:1,
-            content:'backend server using Nodejs',
-            important:true
-        },
-        {
-            id:2,
-            content:'backend restfuk using nodejs will grow complex',
-            important:false
-        },
-        {
-            id:3,
-            content:'express makes backend restful painless',
-            important:true
-        }
-    ];
+
+const url=`mongodb+srv://hema01492:9003848078@cluster0.kgdagnl.mongodb.net/NotesDB?retryWrites=true&w=majority`;
+
+mongoose.connect(url)
+.then( ()=> console.log('Connected to mongodb'))
+.catch((err)=> console.log(err));
+
+//save a note in a DB
+//define a schema
+
+const noteSchema= new mongoose.Schema({
+    content:String,
+    important:Boolean
+});
+
+//create a note
+const Note= mongoose.model('Note',noteSchema,'notes');//(DBNAME,SCHEMA,COLLECTION NAME)
+
+
+
    
 // //1.set the endpoints(different end points )
 // app.get('/',(request,response)=>{
@@ -34,7 +39,10 @@ let notes=[
  
 //2.to get all the notes
 app.get('/api/notes',(request,response)=>{
-    response.status(200).json(notes);
+    Note.find({},{})
+    .then(notes =>{
+        response.status(200).json(notes);
+    })
 });
 
 // //creates a new resource based on the request data
